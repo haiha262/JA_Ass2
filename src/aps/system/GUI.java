@@ -5,8 +5,6 @@ package aps.system;
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
- 
-
 import java.awt.BorderLayout;
 import java.awt.Label;
 import java.awt.event.ActionEvent;
@@ -40,8 +38,11 @@ public class GUI extends JFrame implements ActionListener {
     static final int SPEED_DEFAULT = 100;
     private int speed = SPEED_DEFAULT;
     private Timer timer;
-    private PaintPanel canvas;
+    private PaintSystem canvas;
     private paintFloor floor;
+
+    private Thread aThread;
+    private boolean useThread = true;
 
     public GUI() {
         setTitle("Assignment 1");
@@ -52,8 +53,8 @@ public class GUI extends JFrame implements ActionListener {
 //        label.setFont(new Font("Serif", Font.PLAIN, DEFAULT_SIZE));
 //        add(label, BorderLayout.CENTER);
         // add the radio buttons
-        canvas = new PaintPanel(true);
-       
+        canvas = new PaintSystem(true);
+
         buttonPanel = new JPanel();
 
         btnPlay = new JButton("Play");
@@ -80,49 +81,66 @@ public class GUI extends JFrame implements ActionListener {
 
 //        panel= new JPanel();
         //panel.add(new Label("Ground"));
-       // panel.add(canvas, BorderLayout.CENTER);
-        tabbedPane.addTab("Ground", canvas);        
+        // panel.add(canvas, BorderLayout.CENTER);
+        tabbedPane.addTab("Ground", canvas);
 
         for (int i = 0; i < SystemSupport.NF; i++) {
-             floor = new paintFloor(i);
-            tabbedPane.addTab("Floor " + (i+1), floor);
+            floor = new paintFloor(i);
+            tabbedPane.addTab("Floor " + (i + 1), floor);
         }
         add(tabbedPane, BorderLayout.CENTER);
-        Thread thread = new Thread();
-        
-        timer = new Timer(speed, new ActionListener() {
 
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                repaint();
-                //canvas.repaint();
-                //floor1.repaint();
-            }
-        });
-        timer.start();
+        if (useThread) {
+            aThread = new Thread(canvas);
+            aThread.start();
+        } else {
+            timer = new Timer(speed, new ActionListener() {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    repaint();
+                    //canvas.repaint();
+                    //floor1.repaint();
+                }
+            });
+            timer.start();
+        }
 
     }
 
     public void actionPerformed(ActionEvent e) {
-
-        repaint();
+        if (!useThread) {
+            repaint();
+        }
         if (e.getSource() == btnPlay) {
             speed = SPEED_DEFAULT;
-            timer.start();
+
+            if (!useThread) {
+                timer.start();
+            } else {
+                aThread.resume();
+            }
         } else {
             if (e.getSource() == btnPause) {
-                timer.stop();
+
+                if (!useThread) {
+                    timer.stop();
+                } else {
+                    aThread.suspend();
+                }
             } else {
                 if (e.getSource() == btnFoward2X) {
                     speed = SPEED_DEFAULT / 6;
-                    timer.start();
+                    if (!useThread) {
+                        timer.start();
+                    }
                 } else {
                     if (e.getSource() == btnPark) {
                         if (canvas.isProgess()) {
                             JOptionPane.showMessageDialog(this, "Wait unitl the progess finihes ");
                         } else if (canvas.canParking()) {
                             canvas.changeState(Statement.STATE_ENTER_INIT);
-                            
+
                         } else {
                             JOptionPane.showMessageDialog(this, "Not enough space to park");
                         }
@@ -134,7 +152,7 @@ public class GUI extends JFrame implements ActionListener {
                             boolean canRelease = canvas.setFindID(Integer.parseInt(id));
                             if (canRelease) {
                                 canvas.changeState(Statement.STATE_RELEASE_CAR_INIT);
-                            
+
                             } else {
                                 JOptionPane.showMessageDialog(this, "Can't found that car id ");
                             }
@@ -143,8 +161,10 @@ public class GUI extends JFrame implements ActionListener {
                 }
             }
         }
-
-        timer.setDelay(speed);
-
+        if (!useThread) {
+            timer.setDelay(speed);
+        } else {
+            SystemSupport.DelayTime(500);
+        }
     }
 }

@@ -32,7 +32,7 @@ import javax.swing.JPanel;
  *
  * @author M
  */
-public class PaintPanel extends JPanel {
+public class PaintSystem extends JPanel implements Runnable  {
 
     private boolean debug = false;
     private boolean isProgess;
@@ -57,7 +57,7 @@ public class PaintPanel extends JPanel {
      * PaintPanel Construction
      * @param isDoubleBuffered true if using double buffer of system
      */
-    public PaintPanel(boolean isDoubleBuffered) {
+    public PaintSystem(boolean isDoubleBuffered) {
         super(isDoubleBuffered);
         //load config
         SystemSupport.loadConfig();
@@ -70,7 +70,11 @@ public class PaintPanel extends JPanel {
         isProgess = false;
 
     }
-
+    public void run()
+    {
+        while(true)
+        repaint();
+    }
     /**
      * Method reset Buffer
      *
